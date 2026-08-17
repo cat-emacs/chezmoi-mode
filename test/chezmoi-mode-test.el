@@ -185,7 +185,7 @@
             (should (= mode-calls 1))))
       (delete-directory root t))))
 
-(ert-deftest chezmoi-mode-from-path-ignores-data-files ()
+(ert-deftest chezmoi-mode-from-path-ignores-special-files ()
   (let* ((root (make-temp-file "chezmoi.root" t))
          (chezmoi-root (file-name-as-directory root))
          (mode-calls 0))
@@ -193,11 +193,38 @@
         (cl-letf (((symbol-function 'chezmoi-mode)
                    (lambda (&optional _arg) (cl-incf mode-calls))))
           (dolist (relative '(".chezmoidata/packages/emacs.toml"
-                              ".chezmoidata.toml"))
+                              ".chezmoidata.toml"
+                              "dot_config/.chezmoidata/nested.yaml"
+                              "dot_config/.chezmoidata.toml"
+                              "dot_config/.chezmoiignore"
+                              "dot_config/.chezmoiignore.tmpl"
+                              "dot_config/.chezmoiremove"
+                              "dot_config/.chezmoiexternal.toml"
+                              "dot_config/.chezmoiexternal.yaml.tmpl"
+                              ".chezmoi.toml.tmpl"
+                              ".chezmoiroot"
+                              ".chezmoiversion"))
             (with-temp-buffer
               (setq buffer-file-name (expand-file-name relative root))
               (chezmoi--mode-from-path)))
           (should (= mode-calls 0)))
+      (delete-directory root t))))
+
+(ert-deftest chezmoi-mode-from-path-enables-target-state-sources ()
+  (let* ((root (make-temp-file "chezmoi.root" t))
+         (chezmoi-root (file-name-as-directory root))
+         (mode-calls 0))
+    (unwind-protect
+        (cl-letf (((symbol-function 'chezmoi-mode)
+                   (lambda (&optional _arg) (cl-incf mode-calls))))
+          (dolist (relative '("dot_config/config.el"
+                              "dot_zshrc"
+                              ".chezmoitemplates/shared"
+                              ".chezmoiscripts/run_once_setup.sh"))
+            (with-temp-buffer
+              (setq buffer-file-name (expand-file-name relative root))
+              (chezmoi--mode-from-path)))
+          (should (= mode-calls 4)))
       (delete-directory root t))))
 
 (ert-deftest chezmoi-mode-supports-real-polymode-template-buffers ()

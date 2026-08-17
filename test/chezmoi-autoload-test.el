@@ -20,9 +20,13 @@
   "Generated autoloads should enable Chezmoi only for target-state sources."
   (should-not (featurep 'chezmoi-core))
   (let* ((root (make-temp-file "chezmoi-autoload-root" t))
-         (source-file (expand-file-name "dot_config" root))
+         (source-file (expand-file-name "dot_zshrc" root))
          (data-file (expand-file-name
                      ".chezmoidata/packages/emacs.toml" root))
+         (nested-ignore (expand-file-name
+                         "dot_config/.chezmoiignore" root))
+         (nested-data (expand-file-name
+                       "dot_config/.chezmoidata.toml" root))
          (autoload-file
           (make-temp-file
            (expand-file-name ".chezmoi-mode-autoloads-"
@@ -51,8 +55,13 @@
           (with-temp-file source-file)
           (make-directory (file-name-directory data-file) t)
           (with-temp-file data-file)
+          (make-directory (file-name-directory nested-ignore) t)
+          (with-temp-file nested-ignore)
+          (with-temp-file nested-data)
           (dolist (case `((,source-file . t)
-                          (,data-file . nil)))
+                          (,data-file . nil)
+                          (,nested-ignore . nil)
+                          (,nested-data . nil)))
             (let ((buffer (find-file-noselect (car case))))
               (push buffer buffers)
               (with-current-buffer buffer

@@ -38,6 +38,26 @@
   (dolist (entry chezmoi-test--loaded-integration-features)
     (should-not (cdr entry))))
 
+(ert-deftest chezmoi-special-file-name-p-matches-special-basenames ()
+  (dolist (name '(".chezmoiroot"
+                  ".chezmoi.toml.tmpl"
+                  ".chezmoidata.yaml"
+                  ".chezmoiignore"
+                  ".chezmoiignore.tmpl"
+                  ".chezmoiremove"
+                  ".chezmoiexternal.toml"
+                  ".chezmoiexternal.yaml.tmpl"
+                  ".chezmoiversion"))
+    (should (chezmoi-special-file-name-p
+             (expand-file-name (concat "dot_config/" name) "/tmp/chezmoi"))))
+  (dolist (name '("dot_zshrc"
+                  "config.el"
+                  ".chezmoidata.toml.tmpl"
+                  ".chezmoiignore.local"
+                  "chezmoiignore"))
+    (should-not (chezmoi-special-file-name-p
+                 (expand-file-name name "/tmp/chezmoi")))))
+
 (ert-deftest chezmoi-special-source-find-commands-are-commands ()
   (dolist (command '(chezmoi-find-data
                      chezmoi-find-externals

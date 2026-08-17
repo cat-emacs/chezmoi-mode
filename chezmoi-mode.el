@@ -50,18 +50,6 @@
     ".chezmoitemplates")
   "Chezmoi directories whose contents have special meaning.")
 
-(defconst chezmoi-special-file-name-regexp
-  (rx string-start
-      (or ".chezmoiroot"
-          (seq ".chezmoi." (+ (not ".")) ".tmpl")
-          (seq ".chezmoidata." (+ (not ".")))
-          (seq ".chezmoiignore" (opt ".tmpl"))
-          (seq ".chezmoiremove" (opt ".tmpl"))
-          (seq ".chezmoiexternal." (+ (not ".")) (opt ".tmpl"))
-          ".chezmoiversion")
-      string-end)
-  "Regexp matching Chezmoi special file names.")
-
 (declare-function chezmoi-template-buffer-display "chezmoi-template" (&optional display-p start buffer-or-name))
 (declare-function chezmoi-template-buffer-p "chezmoi-template" (&optional buffer-or-name))
 (declare-function chezmoi-template-schedule-buffer-display "chezmoi-template" (&optional parser-found-p))

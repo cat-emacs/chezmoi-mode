@@ -103,6 +103,25 @@ When nil, Chezmoi is unavailable or has not reported a source directory."
     ".tmpl")
   "Source state attribute suffixes.")
 
+(defconst chezmoi-special-file-name-regexp
+  (rx string-start
+      (or ".chezmoiroot"
+          (seq ".chezmoi." (+ (not ".")) ".tmpl")
+          (seq ".chezmoidata." (+ (not ".")))
+          (seq ".chezmoiignore" (opt ".tmpl"))
+          (seq ".chezmoiremove" (opt ".tmpl"))
+          (seq ".chezmoiexternal." (+ (not ".")) (opt ".tmpl"))
+          ".chezmoiversion")
+      string-end)
+  "Regexp matching Chezmoi special file names.
+These files may appear in any source-state directory.")
+
+(defun chezmoi-special-file-name-p (file)
+  "Return non-nil when FILE's basename is a Chezmoi special file."
+  (and file
+       (string-match-p chezmoi-special-file-name-regexp
+                       (file-name-nondirectory file))))
+
 (defun chezmoi--unchezmoi-source-file-name (source-file)
   "Remove Chezmoi attributes from SOURCE-FILE."
   (let* ((base-name (file-name-base source-file))
@@ -157,14 +176,14 @@ Every file below a `.chezmoitemplates' directory is also a template."
 
 (defun chezmoi--auto-enable-file-p (file)
   "Return non-nil when FILE should automatically enable `chezmoi-mode'.
-Chezmoi data files provide template input rather than target-state content, so
-exclude the `.chezmoidata' directory and top-level `.chezmoidata.*' files."
+Chezmoi special files and `.chezmoidata' directories are not target-state
+sources.  They may appear in any source-state directory."
   (when (and file chezmoi-root
              (file-in-directory-p file chezmoi-root))
-    (let* ((relative (file-relative-name file chezmoi-root))
-           (top-level (car (file-name-split relative))))
-      (not (or (equal top-level ".chezmoidata")
-               (string-prefix-p ".chezmoidata." top-level))))))
+    (not (or (chezmoi-special-file-name-p file)
+             (member ".chezmoidata"
+                     (file-name-split
+                      (file-relative-name file chezmoi-root)))))))
 
 ;;;###autoload
 (defun chezmoi--mode-from-path ()

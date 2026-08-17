@@ -52,7 +52,8 @@ log on the top right, and the rendered target file on the bottom right.
 
   You can also enable or disable the minor mode with ~M-x chezmoi-mode~.
   Visiting a file below ~chezmoi-root~ enables it automatically, except for
-  data files below ~.chezmoidata/~ or files named ~.chezmoidata.*~.  Set
+  Chezmoi special files such as ~.chezmoiignore~ and ~.chezmoidata.*~, which
+  may appear in any source directory, and files below ~.chezmoidata/~.  Set
   ~chezmoi-auto-enable-mode~ to nil to disable automatic activation.
 
   For a menu of the common commands, run ~M-x chezmoi-transient~.
