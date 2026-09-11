@@ -44,6 +44,7 @@
           (dolist (command '(chezmoi-dired-add-marked-files
                              chezmoi-ediff
                              chezmoi-ediff-merge
+                             chezmoi-find-transient
                              chezmoi-magit-status
                              chezmoi-transient))
             (should (autoloadp (symbol-function command))))
@@ -51,6 +52,9 @@
                              chezmoi-age-get-recipients))
             (should-not (fboundp command)))
           (should-not (featurep 'chezmoi-age))
+          (should-not (fboundp 'chezmoi-transient--current-file-p))
+          (autoload-do-load (symbol-function 'chezmoi-transient))
+          (should (fboundp 'chezmoi-transient--current-file-p))
           (should (memq #'chezmoi--mode-from-path find-file-hook))
           (with-temp-file source-file)
           (make-directory (file-name-directory data-file) t)

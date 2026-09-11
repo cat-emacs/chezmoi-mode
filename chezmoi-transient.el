@@ -80,7 +80,7 @@
   (with-current-buffer (chezmoi-transient--base-buffer)
     (call-interactively #'chezmoi-mode)))
 
-;;;###autoload
+;;;###autoload (autoload 'chezmoi-find-transient "chezmoi-transient" nil t)
 (transient-define-prefix chezmoi-find-transient ()
   "Find Chezmoi source files."
   [["Find"
@@ -91,7 +91,7 @@
     ("t" "Template" chezmoi-find-templates)
     ("." "Special file" chezmoi-find-special-file)]])
 
-;;;###autoload
+;;;###autoload (autoload 'chezmoi-transient "chezmoi-transient" nil t)
 (transient-define-prefix chezmoi-transient ()
   "Manage Chezmoi source and target files."
   [["Files"
