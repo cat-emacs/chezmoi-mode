@@ -332,7 +332,7 @@ SOURCE-FILE itself."
 
 (defun chezmoi--source-directory ()
   "Return the source directory before `.chezmoiroot' is applied."
-  (when-let ((root (chezmoi--source-root)))
+  (when-let* ((root (chezmoi--source-root)))
     (or (locate-dominating-file root ".chezmoiroot")
         root)))
 
@@ -364,7 +364,7 @@ SOURCE-FILE itself."
   "Return files below special directories named DIRECTORY-NAME."
   (unless (member directory-name chezmoi-special-directory-names)
     (error "Unknown Chezmoi special directory: %s" directory-name))
-  (when-let ((root (chezmoi--source-root)))
+  (when-let* ((root (chezmoi--source-root)))
     (cl-remove-if-not
      (lambda (file)
        (member directory-name
@@ -374,7 +374,7 @@ SOURCE-FILE itself."
 
 (defun chezmoi-special-files ()
   "Return Chezmoi special files in the source directory."
-  (when-let ((root (chezmoi--source-directory)))
+  (when-let* ((root (chezmoi--source-directory)))
     (cl-remove-if-not
      (lambda (file)
        (string-match-p chezmoi-special-file-name-regexp
@@ -484,7 +484,7 @@ When DIRECTORY-NAME is non-nil, omit that path component from candidates."
   "Return non-nil if FILE is a Chezmoi template file.
 
 Does not check if the file is managed by chezmoi."
-  (when-let ((source-file (if (chezmoi-source-file-p file)
+  (when-let* ((source-file (if (chezmoi-source-file-p file)
                               file
                             (chezmoi-source-file file))))
     (chezmoi-template-source-file-p source-file)))
@@ -639,8 +639,9 @@ With prefix ARG, save the source buffer."
 	;; File is in target state
 	(let* ((target-file file)
 	       (source-file (chezmoi-source-file target-file)))
-	  (with-current-buffer (find-file-noselect source-file)
-	    (replace-buffer-contents (find-file-noselect target-file))
+          (with-current-buffer (find-file-noselect source-file)
+            (replace-region-contents
+             (point-min) (point-max) (find-file-noselect target-file))
 	    (if arg
 		(progn
 		  (save-buffer)

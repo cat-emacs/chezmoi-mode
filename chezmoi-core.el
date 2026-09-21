@@ -57,7 +57,7 @@ If the target has been changed, it will be overwritten."
 
 (defun chezmoi--default-root ()
   "Return the configured chezmoi source directory, if available."
-  (when-let ((command (executable-find chezmoi-command)))
+  (when-let* ((command (executable-find chezmoi-command)))
     (with-temp-buffer
       (when (zerop (call-process command nil t nil "source-path"))
         (let ((path (string-trim (buffer-string))))

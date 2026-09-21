@@ -129,7 +129,7 @@ When TEMPLATE-P is non-nil, enable template-aware region handling."
 
 (defun chezmoi-ediff--delete-rendered-temp-file ()
   "Delete the rendered temporary file registered in the current buffer."
-  (when-let ((file chezmoi-ediff--rendered-temp-file))
+  (when-let* ((file chezmoi-ediff--rendered-temp-file))
     (setq-local chezmoi-ediff--rendered-temp-file nil)
     (when (file-exists-p file)
       (delete-file file)))

@@ -312,7 +312,7 @@
             (should (equal process-args '("dump-config")))
             (with-current-buffer buffer
               (should buffer-read-only))))
-      (when-let ((buffer (get-buffer buffer-name)))
+      (when-let* ((buffer (get-buffer buffer-name)))
         (kill-buffer buffer)))))
 
 (provide 'chezmoi-core-test)

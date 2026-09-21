@@ -117,7 +117,7 @@ Set this to zero to query Chezmoi on every completion request."
 (defun chezmoi-template--gotmpl-primary-parser-p ()
   "Return non-nil when the current inner mode selects a Go Template parser."
   (if (boundp 'treesit-primary-parser)
-      (when-let ((parser (symbol-value 'treesit-primary-parser)))
+      (when-let* ((parser (symbol-value 'treesit-primary-parser)))
         (eq (treesit-parser-language parser) 'gotmpl))
     (cl-some (lambda (parser)
                (eq (treesit-parser-language parser) 'gotmpl))
@@ -155,7 +155,7 @@ span."
                          (puthash (current-buffer) parser parsers))
                        (unless (eq parser no-parser)
                          (funcall function span parser))))))
-              (when-let ((parser (chezmoi-template--gotmpl-parser)))
+              (when-let* ((parser (chezmoi-template--gotmpl-parser)))
                 (funcall function
                          (list nil (point-min) (point-max))
                          parser)))))))))
@@ -230,7 +230,7 @@ span."
 
 (defun chezmoi-capf ()
   "Complete the Chezmoi template selector at point."
-  (when-let ((node (chezmoi-template--selector-node-at-point)))
+  (when-let* ((node (chezmoi-template--selector-node-at-point)))
     (let* ((bounds (chezmoi-template--completion-bounds node))
            (beg (car bounds))
            (end (cdr bounds))
@@ -288,7 +288,7 @@ Return non-nil when at least one `gotmpl' parser was found."
 
 (defun chezmoi-template--install-inner-buffer-hooks ()
   "Install requested Chezmoi hooks in a new Polymode inner buffer."
-  (when-let ((base-buffer (buffer-base-buffer)))
+  (when-let* ((base-buffer (buffer-base-buffer)))
     (let ((completion-enabled-p
            (buffer-local-value
             'chezmoi-template--completion-enabled-p base-buffer))
@@ -351,7 +351,7 @@ Return non-nil when at least one compatible parser was found."
 The bounds default to the beginning and end of the current buffer.
 Only direct selector expressions such as `{{ .foo }}' are returned.  PARSER,
 when non-nil, is the current buffer's Go Template parser."
-  (when-let ((parser (or parser (chezmoi-template--gotmpl-parser))))
+  (when-let* ((parser (or parser (chezmoi-template--gotmpl-parser))))
     (let ((minimum (or minimum (point-min)))
           (maximum (or maximum (point-max)))
           spans)
@@ -361,7 +361,7 @@ when non-nil, is the current buffer's Go Template parser."
                 '((selector_expression) @selector
                   (field) @selector)
                 minimum maximum))
-        (when-let ((span (chezmoi-template--selector-action-span
+        (when-let* ((span (chezmoi-template--selector-action-span
                           (cdr capture))))
           (when (and (<= minimum (car span))
                      (<= (cdr span) maximum))
@@ -404,7 +404,7 @@ when non-nil, is the current buffer's Go Template parser."
 (defun chezmoi-template--dig-expression (template missing-token)
   "Return a missing-safe expression for selector TEMPLATE.
 Use MISSING-TOKEN as the fallback value."
-  (when-let ((keys (chezmoi-template--selector-keys template)))
+  (when-let* ((keys (chezmoi-template--selector-keys template)))
     (format "{{ dig %s %S . }}"
             (mapconcat #'prin1-to-string keys " ")
             missing-token)))
