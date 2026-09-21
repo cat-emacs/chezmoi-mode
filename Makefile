@@ -13,10 +13,10 @@ LOAD_PATH = -L . -L test
 AGE_LOAD_PATH = -L . -L extensions/chezmoi-age
 TEST_LOAD_PATH = $(LOAD_PATH) $(foreach path,$(TEST_DEP_PATHS),-L $(path))
 SOURCES = chezmoi-core.el chezmoi-template.el chezmoi-mode.el \
-	chezmoi-dired.el chezmoi-ediff.el chezmoi-magit.el \
+	chezmoi-dired.el chezmoi-ediff.el chezmoi-magit.el chezmoi-difftastic.el \
 	chezmoi-transient.el
 AGE_SOURCE = extensions/chezmoi-age/chezmoi-age.el
-UNIT_TESTS = core mode template ediff transient
+UNIT_TESTS = core mode template ediff difftastic transient
 UNIT_TEST_LOADS = $(foreach test,$(UNIT_TESTS),-l chezmoi-$(test)-test)
 INTEGRATION_TESTS = core mode template host-mode transient
 INTEGRATION_TEST_LOADS = $(foreach test,$(INTEGRATION_TESTS),-l chezmoi-$(test)-test)
@@ -43,7 +43,8 @@ ARCHIVES = $(DEPENDENCY_SETUP) \
 
 .PHONY: all install-deps install-poly-test-dep install-test-deps \
 	check-test-deps compile compile-age test test-autoload test-core test-mode \
-	test-template test-ediff test-transient test-unit test-integration clean
+	test-template test-ediff test-difftastic test-transient test-unit \
+	test-integration clean
 
 all: compile test
 
@@ -97,7 +98,7 @@ test-unit:
 		$(UNIT_TEST_LOADS) \
 		--eval "(ert-run-tests-batch-and-exit '(not (tag integration)))"
 
-test-core test-mode test-template test-ediff test-transient: test-%:
+test-core test-mode test-template test-ediff test-difftastic test-transient: test-%:
 	$(EMACS) -Q --batch $(LOAD_PATH) $(PACKAGE_SETUP) \
 		-l chezmoi-$*-test \
 		--eval "(ert-run-tests-batch-and-exit '(not (tag integration)))"

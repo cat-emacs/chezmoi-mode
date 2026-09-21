@@ -35,6 +35,7 @@
 (autoload 'chezmoi-ediff "chezmoi-ediff" nil t)
 (autoload 'chezmoi-ediff-merge "chezmoi-ediff" nil t)
 (autoload 'chezmoi-magit-status "chezmoi-magit" nil t)
+(autoload 'chezmoi-difftastic-diff "chezmoi-difftastic" nil t)
 
 (defun chezmoi-transient--current-file-p ()
   "Return non-nil when the current buffer visits a file."
@@ -105,6 +106,7 @@
      :inapt-if-not chezmoi-transient--current-file-p)
     ("s" "Sync changed files" chezmoi-transient-sync-files)
     ("d" "Show diff" chezmoi-diff)
+    ("T" "Show Difftastic diff" chezmoi-difftastic-diff)
     ("S" "Show status" chezmoi-status)
     ("X" "Clear external cache" chezmoi-clear-external-cache)]
    ["Resolve"

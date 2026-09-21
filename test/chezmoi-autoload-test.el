@@ -41,7 +41,8 @@
           (loaddefs-generate chezmoi-autoload-test--source-directory
                              autoload-file nil nil nil t)
           (load autoload-file nil t)
-          (dolist (command '(chezmoi-dired-add-marked-files
+          (dolist (command '(chezmoi-difftastic-diff
+                             chezmoi-dired-add-marked-files
                              chezmoi-ediff
                              chezmoi-ediff-merge
                              chezmoi-find-transient

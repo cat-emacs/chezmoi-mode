@@ -2,7 +2,8 @@
 
 ~chezmoi-mode~ provides Emacs commands for editing and synchronizing files
 managed by [[https://chezmoi.io/][chezmoi]].  It works with chezmoi's source and target states,
-and includes support for templates, Dired, Ediff, Magit, and Transient.
+and includes support for templates, Dired, Ediff, Magit, Difftastic, and
+Transient.
 
 [[https://melpa.org/#/chezmoi-mode][file:https://melpa.org/packages/chezmoi-mode-badge.svg]]
 
@@ -70,6 +71,7 @@ log on the top right, and the rendered target file on the bottom right.
   | ~chezmoi-sync-files~     | Interactively sync multiple changed files.      |
   | ~chezmoi-open-other~     | Open the corresponding source or target file.   |
   | ~chezmoi-diff~           | Show the output of ~chezmoi diff~.               |
+  | ~chezmoi-difftastic-diff~ | Show ~chezmoi diff~ with Difftastic rendering.   |
   | ~chezmoi-ediff~          | Compare and resolve source and target states.   |
   | ~chezmoi-merge~          | Run chezmoi's configured external merge tool.   |
 
@@ -141,6 +143,14 @@ log on the top right, and the rendered target file on the bottom right.
   ** Magit
 
      ~chezmoi-magit-status~ opens Magit for the chezmoi source repository.
+
+  ** Difftastic
+
+     When the ~difftastic~ Emacs package and the ~difft~ executable are
+     available, ~chezmoi-difftastic-diff~ renders ~chezmoi diff~ using
+     Difftastic.  It uses a temporary copy of the effective Chezmoi
+     configuration, so the normal Chezmoi configuration is not changed.
+     Press ~g~ in the result buffer to rerun the diff.
 
   ** Evil and ligatures
 
