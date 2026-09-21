@@ -81,9 +81,9 @@ log on the top right, and the rendered target file on the bottom right.
   The commands ~chezmoi-find-data~, ~chezmoi-find-externals~,
   ~chezmoi-find-scripts~, ~chezmoi-find-templates~, and
   ~chezmoi-find-special-file~ select files from chezmoi's special source
-  directories and files.  ~chezmoi-find-scripts~ uses the same source-opening
-  path as ~chezmoi-find~, so template mode selection and synchronization are
-  initialized for Chezmoi scripts as well.
+  directories and files.  ~chezmoi-clear-external-cache~ selects one
+  cache-backed external file and removes its URL cache, so the next apply
+  downloads it again.
 
   The following table summarizes the closest chezmoi and Emacs equivalents:
 

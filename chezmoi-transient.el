@@ -105,7 +105,8 @@
      :inapt-if-not chezmoi-transient--current-file-p)
     ("s" "Sync changed files" chezmoi-transient-sync-files)
     ("d" "Show diff" chezmoi-diff)
-    ("S" "Show status" chezmoi-status)]
+    ("S" "Show status" chezmoi-status)
+    ("X" "Clear external cache" chezmoi-clear-external-cache)]
    ["Resolve"
     ("e" "Ediff source/target" chezmoi-ediff)
     ("E" "Ediff with ancestor" chezmoi-ediff-merge)

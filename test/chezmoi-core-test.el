@@ -251,6 +251,29 @@
         (kill-buffer buffer))
       (delete-file source))))
 
+(ert-deftest chezmoi-external-config-parser-reads-file-entry ()
+  (let ((entries
+         (chezmoi--parse-external-config
+          "[\"foo\"]\n  type = \"file\"\n  url = \"https://example.com/foo\""
+          "/tmp/target/")))
+    (should
+     (equal entries
+            '((:target "/tmp/target/foo"
+               :type "file"
+               :urls ("https://example.com/foo")))))))
+
+(ert-deftest chezmoi-external-cache-file-uses-sha256-url-key ()
+  (let ((config (make-hash-table :test #'equal)))
+    (puthash "cacheDir" "/tmp/chezmoi-cache" config)
+    (cl-letf (((symbol-function 'chezmoi-get-config)
+               (lambda () config)))
+      (should
+       (equal
+        (chezmoi--external-cache-file "https://example.com/foo")
+        (expand-file-name
+         (concat "external/" (secure-hash 'sha256 "https://example.com/foo"))
+         "/tmp/chezmoi-cache"))))))
+
 (ert-deftest chezmoi-dispatch-passes-arguments-without-shell-quoting ()
   (let ((chezmoi-command "printf"))
     (should (equal (chezmoi--dispatch '("%s" "hello world"))

@@ -142,6 +142,182 @@ Pretty-print the output first when JSON-P is non-nil."
   (thread-last (chezmoi-managed)
 	       (cl-remove-if #'file-directory-p)))
 
+(defun chezmoi-managed-externals ()
+  "List external files managed by chezmoi."
+  (thread-last '("managed" "-i" "externals" "-p" "absolute")
+               chezmoi--dispatch
+               (cl-map 'list #'expand-file-name)
+               (cl-remove-if #'file-directory-p)))
+
+(defun chezmoi--external-source-files ()
+  "Return source files that define Chezmoi externals."
+  (delete-dups
+   (mapcar
+    #'expand-file-name
+    (append
+     (chezmoi-special-directory-files ".chezmoiexternals")
+     (cl-remove-if-not
+      (lambda (file)
+        (string-match-p "\\`.chezmoiexternal\\."
+                        (file-name-nondirectory file)))
+      (chezmoi-special-files))))))
+
+(defun chezmoi--toml-quoted-strings (value)
+  "Return quoted strings in TOML VALUE.
+This intentionally handles the URL and URL-array forms used by externals."
+  (let ((start 0)
+        strings)
+    (while (string-match "[\\\"']\\([^\\\"']*\\)[\\\"']" value start)
+      (push (match-string 1 value) strings)
+      (setq start (match-end 0)))
+    (nreverse strings)))
+(defun chezmoi--external-config-entry (properties target-directory)
+  "Build an external entry from PROPERTIES relative to TARGET-DIRECTORY."
+  (when properties
+    (let* ((key (plist-get properties :key))
+           (target (or (plist-get properties :target-path) key)))
+      (when (and key target)
+        (list :target (expand-file-name target target-directory)
+              :type (plist-get properties :type)
+              :urls (delete-dups (plist-get properties :urls)))))))
+
+(defun chezmoi--parse-external-config (contents target-directory)
+  "Parse external entries in TOML CONTENTS below TARGET-DIRECTORY.
+Return entries as plists with `:target', `:type', and `:urls' properties."
+  (let ((lines (split-string contents "\n"))
+        current
+        entries)
+    (dolist (line lines)
+      (cond
+       ((string-match "^[[:space:]]*\\[\\([^]]+\\)\\][[:space:]]*$" line)
+        (when-let* ((entry (chezmoi--external-config-entry
+                            current target-directory)))
+          (push entry entries))
+        (let ((key (string-trim (match-string 1 line))))
+          (setq current
+                (list :key
+                      (if (and (> (length key) 1)
+                               (eq (aref key 0) ?\")
+                               (eq (aref key (1- (length key))) ?\"))
+                          (substring key 1 -1)
+                        key)))))
+       ((and current
+             (string-match
+              "^[[:space:]]*\\([[:alnum:]_-]+\\)[[:space:]]*=\\(.*\\)$"
+              line))
+        (let ((name (match-string 1 line))
+              (value (match-string 2 line)))
+          (cond
+           ((string= name "type")
+            (setq current
+                  (plist-put current :type
+                             (car (chezmoi--toml-quoted-strings value)))))
+           ((member name '("url" "urls"))
+            (setq current
+                  (plist-put current :urls
+                             (append (plist-get current :urls)
+                                     (chezmoi--toml-quoted-strings value)))))
+           ((string= name "targetPath")
+            (setq current
+                  (plist-put current :target-path
+                             (car (chezmoi--toml-quoted-strings value))))))))))
+    (when-let* ((entry (chezmoi--external-config-entry current target-directory)))
+      (push entry entries))
+    entries))
+
+(defun chezmoi--external-config-target-directory (source-file)
+  "Return the target directory for external definitions in SOURCE-FILE."
+  (let* ((root (chezmoi--source-root))
+         (source-directory (file-name-directory source-file))
+         (parts (file-name-split
+                 (file-relative-name source-directory root)))
+         (special-index (cl-position ".chezmoiexternals" parts
+                                     :test #'string=))
+         (relative-directory
+          (if special-index
+              (string-join (cl-subseq parts 0 special-index) "/")
+            (file-relative-name source-directory root)))
+         (synthetic-source
+          (expand-file-name "_chezmoi_external_target"
+                            (expand-file-name relative-directory root))))
+    (expand-file-name
+     (file-relative-name
+      (file-name-directory
+       (chezmoi--unchezmoi-source-file-name synthetic-source))
+      root)
+     "~")))
+
+(defun chezmoi--external-entries ()
+  "Return rendered external definitions from the source state."
+  (cl-loop for source-file in (chezmoi--external-source-files)
+           when (file-readable-p source-file)
+           append
+           (when-let* ((contents
+                        (chezmoi--dispatch
+                         (list "execute-template" "--file" source-file))))
+             (chezmoi--parse-external-config
+              (string-join contents "\n")
+              (chezmoi--external-config-target-directory source-file)))))
+
+(defun chezmoi--external-file-entries ()
+  "Return cache-backed external file definitions."
+  (cl-remove-if-not
+   (lambda (entry)
+     (member (plist-get entry :type) '("file" "archive-file")))
+   (chezmoi--external-entries)))
+
+(defun chezmoi--external-entries-for-target (target-file)
+  "Return external definitions whose target is TARGET-FILE."
+  (let ((target-file (expand-file-name target-file)))
+    (cl-remove-if-not
+     (lambda (entry)
+       (string-equal target-file
+                     (expand-file-name (plist-get entry :target))))
+     (chezmoi--external-file-entries))))
+
+(defun chezmoi--external-cache-file (url)
+  "Return the cache file for external URL, or nil for non-HTTP URLs."
+  (when (string-match-p "\\`https?://" url)
+    (let* ((config (chezmoi-get-config))
+           (cache-directory
+            (or (and config (gethash "cacheDir" config))
+                (expand-file-name "~/.cache/chezmoi"))))
+      (expand-file-name (secure-hash 'sha256 url)
+                        (expand-file-name "external" cache-directory)))))
+
+;;;###autoload
+(defun chezmoi-clear-external-cache (file)
+  "Delete the cached download for external FILE.
+FILE is selected from managed external files when called interactively.  This
+only removes the downloaded URL cache; it does not change FILE or its target."
+  (interactive
+   (list (chezmoi--completing-read
+          "Clear external cache for: "
+          (chezmoi-managed-externals)
+          'project-file)))
+  (let* ((target-file (expand-file-name file))
+         (entries (chezmoi--external-entries-for-target target-file))
+         (urls (delete-dups (apply #'append (mapcar (lambda (entry)
+                                                     (plist-get entry :urls))
+                                                   entries))))
+         (cache-files (delq nil (mapcar #'chezmoi--external-cache-file urls)))
+         (existing (cl-remove-if-not #'file-exists-p cache-files)))
+    (unless entries
+      (user-error "No external definition found for %s" target-file))
+    (unless urls
+      (user-error "External %s has no URL cache (it may be a git-repo)" target-file))
+    (when (yes-or-no-p (format "Delete %d external cache file%s for %s? "
+                              (length existing)
+                              (if (= (length existing) 1) "" "s")
+                              (abbreviate-file-name target-file)))
+      (dolist (cache-file existing)
+        (delete-file cache-file))
+      (message "Deleted %d external cache file%s for %s"
+               (length existing)
+               (if (= (length existing) 1) "" "s")
+               (abbreviate-file-name target-file))
+      existing)))
+
 (defun chezmoi--open-source-file (source-file &optional mode-file)
   "Visit SOURCE-FILE, infer its mode from MODE-FILE, and enable Chezmoi.
 Return the visited buffer.  When MODE-FILE is nil, keep the mode selected from
